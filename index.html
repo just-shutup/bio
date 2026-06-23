@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marley | Portfolio</title>
+    <style>
+        /* Базовые стили и шрифты */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;800&family=Space+Mono&display=swap');
+
+        :root {
+            --bg-color: #050505;
+            --text-color: #f0f0f0;
+            --accent: #ffffff;
+            --muted: #666666;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Экран входа (Splash Screen) */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-color);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
+        }
+
+        .splash-btn {
+            background: none;
+            border: 1px solid var(--muted);
+            color: var(--text-color);
+            padding: 1rem 2.5rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .splash-btn:hover {
+            border-color: var(--accent);
+            background: var(--text-color);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .splash-screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Канвас для падающих звезд */
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Виджет музыкального плеера */
+        .audio-player {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 100;
+            background: rgba(5, 5, 5, 0.7);
+            border: 1px solid var(--muted);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            backdrop-filter: blur(10px);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .audio-player:hover {
+            border-color: var(--accent);
+        }
+
+        .player-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Space Mono', monospace;
+            text-transform: uppercase;
+            outline: none;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .volume-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 70px;
+            height: 2px;
+            background: var(--muted);
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 8px;
+            height: 8px;
+            background: var(--text-color);
+            cursor: pointer;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 8px;
+            height: 8px;
+            background: var(--text-color);
+            cursor: pointer;
+        }
+
+        /* Контейнер */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Секция Hero */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: clamp(4rem, 10vw, 8rem);
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            line-height: 1;
+            text-transform: uppercase;
+            opacity: 0;
+            transform: translateY(50px);
+        }
+
+        .hero p {
+            font-family: 'Space Mono', monospace;
+            color: var(--muted);
+            font-size: 1.2rem;
+            margin-top: 1rem;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        /* Классы для триггера анимации главного экрана после входа */
+        .hero h1.animate-up {
+            animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .hero p.animate-up {
+            animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+        }
+
+        /* Секция проектов */
+        .projects {
+            padding: 10vh 0;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--text-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 3rem;
+            letter-spacing: 0.1em;
+        }
+
+        .project-card {
+            border: 1px solid var(--muted);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            background: rgba(5, 5, 5, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .project-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-5px);
+        }
+
+        .project-card:hover::before {
+            left: 100%;
+        }
+
+        .project-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .project-card p {
+            color: var(--muted);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .project-card .credits {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 0.5rem;
+            border-left: 2px solid var(--muted);
+            padding-left: 10px;
+        }
+
+        .tech-stack {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .tech-tag {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            border: 1px solid var(--text-color);
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+        }
+
+        /* Контакты */
+        .contacts {
+            padding: 10vh 0;
+            text-align: center;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .social-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: 500;
+            position: relative;
+            padding: 0.5rem 1rem;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .social-links a:hover {
+            border-color: var(--text-color);
+            background: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        /* Анимации появления */
+        .hidden {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="splash-screen" id="splash">
+        <button class="splash-btn" id="enterBtn">Enter</button>
+    </div>
+
+    <canvas id="starfield"></canvas>
+
+    <div class="audio-player">
+        <button class="player-btn" id="playBtn">Pause</button>
+        <div class="volume-control">
+            <span>Vol</span>
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="0.4">
+        </div>
+    </div>
+    <audio id="bgMusic" src="music.mp3" loop></audio>
+
+    <div class="container">
+        <section class="hero">
+            <h1 id="heroTitle">Marley</h1>
+            <p id="heroSubtitle">> Backend Engineer & Tools Developer | Go, Java</p>
+        </section>
+
+        <section class="projects">
+            <h2 class="section-title hidden">Проекты</h2>
+
+            <div class="project-card hidden">
+                <h3>Agonia</h3>
+                <p>CLI OSINT инструмент с интеграцией Vision API и глубоким анализом метаданных.</p>
+                <div class="tech-stack">
+                    <span class="tech-tag">Go</span>
+                    <span class="tech-tag">OSINT</span>
+                </div>
+            </div>
+
+            <div class="project-card hidden">
+                <h3>TO$KA Search</h3>
+                <p>Кастомный поисковый движок для цифровых расследований и сбора данных из открытых источников.</p>
+                <div class="credits">
+                    > Разработка UI. Главный кодер и создатель — <b>kasta</b>.
+                </div>
+                <div class="tech-stack">
+                    <span class="tech-tag">UI/UX</span>
+                    <span class="tech-tag">Go</span>
+                </div>
+            </div>
+
+            <div class="project-card hidden">
+                <h3>Derealization</h3>
+                <p>Бот для автоматизации процессов в Minecraft.</p>
+                <div class="tech-stack">
+                    <span class="tech-tag">Go</span>
+                    <span class="tech-tag">Java</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="contacts hidden">
+            <h2 class="section-title">Связь</h2>
+            <div class="social-links">
+                <a href="https://github.com/just-shutup" target="_blank">GitHub</a>
+                <a href="https://t.me/MarleyCode" target="_blank">Telegram</a>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const music = document.getElementById('bgMusic');
+        const splash = document.getElementById('splash');
+        const enterBtn = document.getElementById('enterBtn');
+        const playBtn = document.getElementById('playBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const heroTitle = document.getElementById('heroTitle');
+        const heroSubtitle = document.getElementById('heroSubtitle');
+
+        // Громкость по умолчанию (40%)
+        music.volume = volumeSlider.value;
+
+        // Логика нажатия на ENTER
+        enterBtn.addEventListener('click', () => {
+            splash.classList.add('fade-out'); // Убираем заставку
+            
+            // Включаем музыку (браузер теперь разрешает, так как был клик)
+            music.play().catch(err => console.log("Ошибка воспроизведения:", err));
+            
+            // Запускаем анимацию текста на главном экране
+            heroTitle.classList.add('animate-up');
+            heroSubtitle.classList.add('animate-up');
+        });
+
+        // Управление плеером из угла
+        playBtn.addEventListener('click', () => {
+            if (music.paused) {
+                music.play();
+                playBtn.textContent = 'Pause';
+            } else {
+                music.pause();
+                playBtn.textContent = 'Play';
+            }
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            music.volume = e.target.value;
+        });
+
+        /* === НАСТРОЙКА АНИМАЦИИ ЗВЕЗДНОГО НЕБА === */
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+        const numStars = 120;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        for (let i = 0; i < numStars; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 1.5 + 0.5,
+                speed: Math.random() * 1.5 + 0.5,
+                opacity: Math.random() * 0.6 + 0.2
+            });
+        }
+
+        function animateStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ffffff';
+            for (let i = 0; i < numStars; i++) {
+                let s = stars[i];
+                ctx.globalAlpha = s.opacity;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fill();
+                s.y += s.speed;
+                s.x -= s.speed * 0.2; 
+                if (s.y > canvas.height) {
+                    s.y = 0;
+                    s.x = Math.random() * canvas.width;
+                }
+                if (s.x < 0) {
+                    s.x = canvas.width;
+                    s.y = Math.random() * canvas.height;
+                }
+            }
+            requestAnimationFrame(animateStars);
+        }
+        animateStars();
+
+        /* === АНИМАЦИЯ ПОЯВЛЕНИЯ ПРИ СКРОЛЛЕ === */
+        const observerOptions = { root: null, rootMargin: '0px', threshold: 0.15 };
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('show');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.hidden').forEach((el) => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
